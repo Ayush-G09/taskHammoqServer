@@ -1,5 +1,5 @@
 import cors from 'cors';
-import express from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { connectDB } from './config/db';
@@ -24,17 +24,22 @@ export function createApp() {
 
   app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
-  app.use('/api', apiLimiter);
-  app.use('/api', async (_req, _res, next) => {
+  // Open (or reuse) the database connection only for routes that need it.
+  const withDb = async (_req: Request, _res: Response, next: NextFunction) => {
     try {
       await connectDB();
       next();
     } catch (err) {
       next(err);
     }
-  });
-  app.use('/api/auth', authRoutes);
-  app.use('/api/tasks', taskRoutes);
+  };
+
+  // Mounted under /api and also at the root, so the API works whether or not the host
+  // (or a client's base URL) includes the /api prefix.
+  for (const base of ['/api', '']) {
+    app.use(`${base}/auth`, apiLimiter, withDb, authRoutes);
+    app.use(`${base}/tasks`, apiLimiter, withDb, taskRoutes);
+  }
 
   app.use(notFound);
   app.use(errorHandler);
