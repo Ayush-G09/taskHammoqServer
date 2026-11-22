@@ -1,11 +1,11 @@
 import mongoose from 'mongoose';
-import { createApp } from './app';
+import app from './app';
 import { connectDB } from './config/db';
 import { env } from './config/env';
 
 async function main() {
   await connectDB();
-  const app = createApp();
+  console.log('MongoDB connected');
   const server = app.listen(env.PORT, () => {
     console.log(`Server listening on port ${env.PORT}`);
   });

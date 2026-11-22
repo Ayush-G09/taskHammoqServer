@@ -2,6 +2,7 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import { connectDB } from './config/db';
 import { env } from './config/env';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { apiLimiter } from './middleware/rateLimit';
@@ -24,6 +25,14 @@ export function createApp() {
   app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
   app.use('/api', apiLimiter);
+  app.use('/api', async (_req, _res, next) => {
+    try {
+      await connectDB();
+      next();
+    } catch (err) {
+      next(err);
+    }
+  });
   app.use('/api/auth', authRoutes);
   app.use('/api/tasks', taskRoutes);
 
@@ -32,3 +41,8 @@ export function createApp() {
 
   return app;
 }
+
+// Vercel's zero-config Express support loads src/app and requires a default export.
+// Local/long-running hosts use the same instance via src/server.ts.
+const app = createApp();
+export default app;

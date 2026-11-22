@@ -10,7 +10,16 @@ cp .env.example .env     # fill in MONGODB_URI and JWT_SECRET
 npm run dev              # http://localhost:5000
 ```
 
-Production: `npm run build && npm start`
+Production (long-running host such as Render/Railway): `npm run build && npm start`
+
+### Vercel
+
+Vercel's zero-config Express support loads `src/app.ts`, which default-exports the app
+(`src/server.ts` is only used for local/long-running hosts). Do not add `api/` or rewrites.
+Set these environment variables on the Vercel project: `MONGODB_URI`, `JWT_SECRET` (16+ chars),
+`CLIENT_ORIGIN` (the deployed client URL, no trailing slash). In MongoDB Atlas > Network Access,
+allow `0.0.0.0/0` (Vercel's IPs are dynamic). `GET /health` never touches the database, so use it
+to tell "function crashed" apart from "database unreachable".
 
 ## Architecture
 
